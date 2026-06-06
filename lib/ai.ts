@@ -65,7 +65,15 @@ export async function transcribeAudio(uri: string): Promise<string> {
   });
 
   if (!resp.ok) {
-    throw new Error(`TRANSCRIBE_${resp.status}`);
+    // Surface the real reason so the UI can tell the user what actually broke.
+    let detail = '';
+    try {
+      const errBody = (await resp.json()) as { error?: { message?: string } };
+      detail = errBody?.error?.message ? `: ${errBody.error.message}` : '';
+    } catch {
+      /* body not JSON */
+    }
+    throw new Error(`TRANSCRIBE_${resp.status}${detail}`);
   }
   const data = (await resp.json()) as { text?: string };
   const text = (data.text ?? '').trim();

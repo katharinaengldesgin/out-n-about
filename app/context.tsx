@@ -31,6 +31,34 @@ import { cn } from '@/lib/utils';
 
 type MicState = 'idle' | 'recording' | 'transcribing' | 'error';
 
+// Turn the raw error thrown by the voice pipeline into a clear, actionable
+// message so the user (and you) can see exactly what broke instead of a
+// generic "couldn't catch that".
+function explainVoiceError(raw: string): string {
+  if (raw.includes('NO_URI')) {
+    return 'The recording came back empty — hold the orb a touch longer, then tap to stop. Or type instead.';
+  }
+  if (raw.startsWith('TRANSCRIBE_401') || raw.includes('Incorrect API key') || raw.includes('invalid_api_key')) {
+    return 'Voice isn’t working: the OpenAI API key was rejected (401). Check the key, then try again — or type instead.';
+  }
+  if (raw.startsWith('TRANSCRIBE_429') || raw.includes('quota')) {
+    return 'Voice is rate-limited or out of OpenAI credit (429). Try again shortly, or type your description instead.';
+  }
+  if (raw.startsWith('TRANSCRIBE_400')) {
+    return 'The audio format wasn’t accepted (400). Try recording again, or type instead.';
+  }
+  if (raw.includes('TRANSCRIBE_EMPTY')) {
+    return 'I heard silence. Speak a little closer and longer, then tap to stop — or type instead.';
+  }
+  if (raw.startsWith('TRANSCRIBE_5')) {
+    return 'OpenAI had a server hiccup. Give it another go in a moment, or type instead.';
+  }
+  if (raw.includes('Network') || raw.includes('fetch')) {
+    return 'I couldn’t reach the transcription service — check your connection, then try again or type instead.';
+  }
+  return `I couldn’t quite catch that (${raw}). Give it another go, or type instead.`;
+}
+
 function MicOrb({ active }: { active: boolean }) {
   const scale = useSharedValue(1);
   const ring = useSharedValue(0);
@@ -138,9 +166,10 @@ export default function ContextFlow() {
       setCaptured(text);
       setMicState('idle');
       if (Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
+    } catch (e) {
       setMicState('error');
-      setErrorMsg('I couldn’t quite catch that. Give it another go, or type instead.');
+      const raw = e instanceof Error ? e.message : String(e);
+      setErrorMsg(explainVoiceError(raw));
     }
   }
 
