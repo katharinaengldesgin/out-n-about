@@ -8,7 +8,8 @@ import type { ImageSourcePropType } from 'react-native';
 // matching on the move name + what it uses so they still get a reference.
 // ---------------------------------------------------------------------------
 
-export type ExerciseImageId =
+// Authored photo illustrations (PNGs in /assets).
+export type PhotoImageId =
   | 'bench-pushups'
   | 'bench-step-ups'
   | 'bench-tricep-dips'
@@ -17,7 +18,37 @@ export type ExerciseImageId =
   | 'pull-ups'
   | 'avatar';
 
-const IMAGE_SOURCES: Record<ExerciseImageId, ImageSourcePropType> = {
+// Reduced line-art glyphs (rendered via react-native-svg), used as a fallback
+// for AI-generated exercises that have no authored photo.
+export type GlyphId =
+  | 'tree'
+  | 'stretch'
+  | 'squat'
+  | 'lunge'
+  | 'march'
+  | 'bridge'
+  | 'balance'
+  | 'walk';
+
+export type ExerciseImageId = PhotoImageId | GlyphId;
+
+const GLYPH_IDS: readonly GlyphId[] = [
+  'tree',
+  'stretch',
+  'squat',
+  'lunge',
+  'march',
+  'bridge',
+  'balance',
+  'walk',
+];
+
+/** True when the id should be rendered as an SVG line-art glyph (not a PNG). */
+export function isGlyphId(id?: ExerciseImageId): id is GlyphId {
+  return !!id && (GLYPH_IDS as readonly string[]).includes(id);
+}
+
+const IMAGE_SOURCES: Record<PhotoImageId, ImageSourcePropType> = {
   'bench-pushups': require('@/assets/Bench-Pushups.png'),
   'bench-step-ups': require('@/assets/Bench-Step-ups.png'),
   'bench-tricep-dips': require('@/assets/Bench-Tricep-Dips.png'),
@@ -28,7 +59,7 @@ const IMAGE_SOURCES: Record<ExerciseImageId, ImageSourcePropType> = {
 };
 
 export function getExerciseImageSource(id?: ExerciseImageId): ImageSourcePropType {
-  if (id && IMAGE_SOURCES[id]) return IMAGE_SOURCES[id];
+  if (id && !isGlyphId(id) && IMAGE_SOURCES[id]) return IMAGE_SOURCES[id];
   return IMAGE_SOURCES.avatar;
 }
 
@@ -49,14 +80,24 @@ const BY_EXERCISE_ID: Record<string, ExerciseImageId> = {
 };
 
 // Keyword rules for AI-generated exercises (checked in order).
+// Authored-photo matches come first so they keep priority; reduced line-art
+// glyphs follow as a fallback for moves with no photo (e.g. "Tree-Stretch").
 const KEYWORD_RULES: { test: RegExp; image: ExerciseImageId }[] = [
+  // Photo matches (highest priority).
   { test: /pull[\s-]?up|chin[\s-]?up|bar|hang/i, image: 'pull-ups' },
   { test: /dip|tricep/i, image: 'bench-tricep-dips' },
   { test: /stair|incline/i, image: 'incline-stair-pushups' },
   { test: /step[\s-]?up/i, image: 'bench-step-ups' },
   { test: /push[\s-]?up|press|chest/i, image: 'bench-pushups' },
-  { test: /plank|bridge|hold|core|glute|wall sit/i, image: 'plank' },
-  { test: /march|squat|lunge|calf|walk|balance/i, image: 'avatar' },
+  { test: /plank|hold|core|wall sit/i, image: 'plank' },
+  // Line-art glyph fallbacks.
+  { test: /tree|stretch|reach|mobility|open|fold|sky|overhead/i, image: 'stretch' },
+  { test: /bridge|glute|hip raise|hip thrust/i, image: 'bridge' },
+  { test: /squat|sit[\s-]?to[\s-]?stand|chair/i, image: 'squat' },
+  { test: /lunge|split|step[\s-]?back|step[\s-]?forward/i, image: 'lunge' },
+  { test: /march|knee[\s-]?lift|high[\s-]?knee/i, image: 'march' },
+  { test: /balance|single[\s-]?leg|stand on one|stork|flamingo/i, image: 'balance' },
+  { test: /walk|stride|loop|pace|step/i, image: 'walk' },
 ];
 
 /**

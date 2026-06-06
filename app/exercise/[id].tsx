@@ -1,4 +1,4 @@
-import { Image, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -8,7 +8,7 @@ import { BookOpen, Heart, Info, ListChecks, Repeat, Sparkles, X } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useSession } from '@/lib/store';
-import { getExerciseImageSource } from '@/lib/exerciseImages';
+import { ExerciseImage } from '@/components/ExerciseImage';
 import { cn } from '@/lib/utils';
 
 const DIFFICULTY_CLS: Record<string, string> = {
@@ -96,10 +96,11 @@ export default function ExerciseDetail() {
         {/* Reference illustration */}
         <Animated.View entering={FadeInDown.duration(400)} className="mx-5 mt-5">
           <View className="items-center justify-center overflow-hidden rounded-2xl border border-border bg-secondary/40">
-            <Image
-              source={getExerciseImageSource(exercise.imageId)}
+            <ExerciseImage
+              imageId={exercise.imageId}
               style={{ width: '100%', aspectRatio: 4 / 3 }}
-              resizeMode="contain"
+              glyphSize={132}
+              glyphFrameClassName="w-full items-center justify-center py-9"
               accessibilityLabel={`Illustration of ${exercise.name}`}
             />
           </View>

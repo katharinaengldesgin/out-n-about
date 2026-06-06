@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useSession, type InterpretedSignal } from '@/lib/store';
-import { getExerciseImageSource } from '@/lib/exerciseImages';
+import { ExerciseImage } from '@/components/ExerciseImage';
 import { cn } from '@/lib/utils';
 
 const KIND_META: Record<InterpretedSignal['kind'], { icon: typeof Shirt; label: string }> = {
@@ -186,10 +186,10 @@ export default function Recommendations() {
                 <View className="flex-row items-start justify-between">
                   <View className="flex-1 flex-row gap-3 pr-2">
                     <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-secondary/50">
-                      <Image
-                        source={getExerciseImageSource(ex.imageId)}
+                      <ExerciseImage
+                        imageId={ex.imageId}
                         style={{ width: '100%', height: '100%' }}
-                        resizeMode="contain"
+                        glyphSize={40}
                         accessibilityLabel={`Illustration of ${ex.name}`}
                       />
                     </View>
