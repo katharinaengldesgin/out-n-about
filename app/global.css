@@ -11,48 +11,52 @@
 /* If expo-font fails, the browser will still have Inter loaded and can use it as fallback */
 
 @layer base {
+  /* OUT n ABOUT — calm, urban-outdoors, emotionally-safe palette.
+     Primary: deep eucalyptus/forest green (capable, grounded).
+     Accent: warm clay/terracotta (encouraging, human warmth).
+     Neutrals: warm off-white sand surfaces. */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --background: 40 33% 97%;
+    --foreground: 160 18% 14%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 160 18% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
+    --popover-foreground: 160 18% 14%;
+    --primary: 162 32% 26%;
+    --primary-foreground: 40 40% 98%;
+    --secondary: 150 18% 92%;
+    --secondary-foreground: 162 32% 22%;
+    --muted: 40 20% 93%;
+    --muted-foreground: 160 8% 42%;
+    --accent: 18 60% 56%;
+    --accent-foreground: 40 40% 98%;
+    --destructive: 6 62% 52%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
+    --border: 150 14% 87%;
+    --input: 150 14% 87%;
+    --ring: 162 32% 26%;
+    --radius: 1rem;
   }
 
   .dark:root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 72% 51%;
+    --background: 165 22% 8%;
+    --foreground: 40 30% 95%;
+    --card: 165 18% 11%;
+    --card-foreground: 40 30% 95%;
+    --popover: 165 18% 11%;
+    --popover-foreground: 40 30% 95%;
+    --primary: 158 42% 60%;
+    --primary-foreground: 165 30% 9%;
+    --secondary: 165 14% 17%;
+    --secondary-foreground: 40 30% 95%;
+    --muted: 165 12% 16%;
+    --muted-foreground: 150 10% 62%;
+    --accent: 18 65% 62%;
+    --accent-foreground: 165 30% 9%;
+    --destructive: 6 60% 56%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 165 12% 20%;
+    --input: 165 12% 20%;
+    --ring: 158 42% 60%;
   }
 }

@@ -162,8 +162,15 @@ export default function RootLayout() {
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
         <GestureHandlerRootView style={{ flex: 1 }}>
           <ToastProvider>
-            <Stack>
-              <Stack.Screen name="(tabs)" options={{ title: 'Habits', headerShown: false }} />
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: 'transparent' } }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="context" />
+              <Stack.Screen name="interpreting" />
+              <Stack.Screen name="recommendations" />
+              <Stack.Screen name="exercise/[id]" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="workout" />
+              <Stack.Screen name="reflection" />
+              <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
             </Stack>
           </ToastProvider>
         </GestureHandlerRootView>
