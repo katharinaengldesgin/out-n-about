@@ -5,13 +5,9 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronRight,
-  Footprints,
   HelpCircle,
   Info,
   Pencil,
-  Shirt,
-  Sparkles,
-  Wind,
 } from 'lucide-react-native';
 
 import { Button } from '@/components/ui/button';
@@ -20,12 +16,6 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { useSession, type InterpretedSignal } from '@/lib/store';
 import { ExerciseImage } from '@/components/ExerciseImage';
 import { cn } from '@/lib/utils';
-
-const KIND_META: Record<InterpretedSignal['kind'], { icon: typeof Shirt; label: string }> = {
-  environment: { icon: Footprints, label: 'Around you' },
-  clothing: { icon: Shirt, label: 'Wearing' },
-  conditions: { icon: Wind, label: 'Conditions' },
-};
 
 const CONFIDENCE_META: Record<InterpretedSignal['confidence'], { label: string; cls: string }> = {
   clear: { label: 'Clear', cls: 'bg-primary/10 text-primary' },
@@ -80,12 +70,6 @@ export default function Recommendations() {
             </View>
           ) : null}
           <View className="rounded-2xl bg-secondary/60 p-4">
-            <View className="mb-2 flex-row items-center gap-2">
-              <Sparkles size={15} className="text-accent" />
-              <Text size="xs" weight="semibold" className="uppercase tracking-widest text-accent">
-                Here’s your moment
-              </Text>
-            </View>
             <Text size="base" className="leading-relaxed text-foreground">
               {scenario.reflection}
             </Text>
@@ -101,69 +85,7 @@ export default function Recommendations() {
           </View>
         </Animated.View>
 
-        {/* Signals — what the AI noticed (source transparency) */}
-        <View className="mt-5 px-5">
-          <Text size="sm" weight="semibold" className="mb-3">
-            What I picked up on
-          </Text>
-          <View className="gap-2">
-            {scenario.signals.map((sig, i) => {
-              const meta = KIND_META[sig.kind];
-              const Icon = meta.icon;
-              const conf = CONFIDENCE_META[sig.confidence];
-              return (
-                <Animated.View
-                  key={sig.label}
-                  entering={FadeInDown.delay(80 * i).duration(400)}
-                  className="flex-row gap-3 rounded-2xl border border-border bg-card p-3.5"
-                >
-                  <View className="h-9 w-9 items-center justify-center rounded-full bg-secondary">
-                    <Icon size={17} className="text-primary" />
-                  </View>
-                  <View className="flex-1">
-                    <View className="flex-row items-center gap-2">
-                      <Text size="sm" weight="semibold" className="text-card-foreground">
-                        {sig.label}
-                      </Text>
-                      <View className={cn('rounded-full px-2 py-0.5', conf.cls)}>
-                        <Text size="xs" weight="semibold" className={conf.cls.split(' ')[1]}>
-                          {conf.label}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text size="xs" variant="muted" className="mt-1 leading-relaxed">
-                      {sig.note}
-                    </Text>
-                  </View>
-                </Animated.View>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Honest follow-up — calm error handling */}
-        {scenario.followUp && showFollowUp ? (
-          <Animated.View entering={FadeInDown.duration(400)} className="mx-5 mt-4">
-            <View className="flex-row gap-3 rounded-2xl border border-accent/30 bg-accent/10 p-4">
-              <HelpCircle size={18} className="text-accent" />
-              <View className="flex-1">
-                <Text size="sm" weight="semibold" className="text-foreground">
-                  One quick check
-                </Text>
-                <Text size="xs" className="mt-1 leading-relaxed text-foreground/80">
-                  {scenario.followUp}
-                </Text>
-                <Pressable onPress={() => setShowFollowUp(false)} className="mt-2 self-start">
-                  <Text size="xs" weight="semibold" className="text-accent">
-                    Got it
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </Animated.View>
-        ) : null}
-
-        {/* Suggestions */}
+        {/* Suggestions — surfaced high */}
         <View className="mt-6 px-5">
           <View className="mb-1 flex-row items-center justify-between">
             <Text size="lg" weight="bold">
@@ -248,6 +170,61 @@ export default function Recommendations() {
             </Pressable>
           ) : null}
         </View>
+
+        {/* Signals — what the AI noticed (source transparency) */}
+        <View className="mt-6 px-5">
+          <Text size="sm" weight="semibold" className="mb-3">
+            What I picked up on
+          </Text>
+          <View className="gap-2">
+            {scenario.signals.map((sig, i) => {
+              const conf = CONFIDENCE_META[sig.confidence];
+              return (
+                <Animated.View
+                  key={sig.label}
+                  entering={FadeInDown.delay(80 * i).duration(400)}
+                  className="rounded-2xl border border-border bg-card px-3.5 py-2.5"
+                >
+                  <View className="flex-row items-center gap-2">
+                    <Text size="sm" weight="semibold" className="flex-shrink text-card-foreground">
+                      {sig.label}
+                    </Text>
+                    <View className={cn('rounded-full px-2 py-0.5', conf.cls)}>
+                      <Text size="xs" weight="semibold" className={conf.cls.split(' ')[1]}>
+                        {conf.label}
+                      </Text>
+                    </View>
+                    <Text size="xs" variant="muted" className="flex-1 text-right" numberOfLines={1}>
+                      {sig.note}
+                    </Text>
+                  </View>
+                </Animated.View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Honest follow-up — calm error handling */}
+        {scenario.followUp && showFollowUp ? (
+          <Animated.View entering={FadeInDown.duration(400)} className="mx-5 mt-4">
+            <View className="flex-row gap-3 rounded-2xl border border-accent/30 bg-accent/10 p-4">
+              <HelpCircle size={18} className="text-accent" />
+              <View className="flex-1">
+                <Text size="sm" weight="semibold" className="text-foreground">
+                  One quick check
+                </Text>
+                <Text size="xs" className="mt-1 leading-relaxed text-foreground/80">
+                  {scenario.followUp}
+                </Text>
+                <Pressable onPress={() => setShowFollowUp(false)} className="mt-2 self-start">
+                  <Text size="xs" weight="semibold" className="text-accent">
+                    Got it
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </Animated.View>
+        ) : null}
 
         {/* Trust / limits disclaimer — placed where it's relevant */}
         <View className="mx-5 mt-5 rounded-2xl border border-border bg-muted/60 p-4">
