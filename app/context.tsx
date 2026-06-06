@@ -14,6 +14,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AlertCircle, Keyboard, Loader, Lock, Mic, Pencil, Square } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import Constants from 'expo-constants';
 import {
   AudioModule,
   RecordingPresets,
@@ -130,10 +131,21 @@ export default function ContextFlow() {
     setErrorMsg(null);
     setCaptured(null);
     try {
-      const perm = await AudioModule.requestRecordingPermissionsAsync();
+      // Check current status first, only prompt if not yet decided. In Expo Go
+      // the native microphone permission string isn't present, so the request
+      // can resolve denied even when the user wants to allow it — surface that
+      // clearly and steer them to typing or a development build.
+      let perm = await AudioModule.getRecordingPermissionsAsync();
+      if (!perm.granted && perm.canAskAgain) {
+        perm = await AudioModule.requestRecordingPermissionsAsync();
+      }
       if (!perm.granted) {
         setMicState('error');
-        setErrorMsg('I need microphone access to hear you. You can also switch to typing below.');
+        setErrorMsg(
+          Constants.appOwnership === 'expo'
+            ? 'Voice recording needs microphone access, which Expo Go can’t grant for this app. Type your description below — or run a development build to speak.'
+            : 'I need microphone access to hear you. Enable it in Settings, or switch to typing below.',
+        );
         return;
       }
       await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
@@ -143,7 +155,11 @@ export default function ContextFlow() {
       if (Platform.OS !== 'web') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {
       setMicState('error');
-      setErrorMsg('Couldn’t start recording. Try again, or switch to typing.');
+      setErrorMsg(
+        Constants.appOwnership === 'expo'
+          ? 'Couldn’t start recording in Expo Go — microphone capture needs a development build. Type your description below to keep going.'
+          : 'Couldn’t start recording. Try again, or switch to typing.',
+      );
     }
   }
 
