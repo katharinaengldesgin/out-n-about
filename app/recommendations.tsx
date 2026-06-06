@@ -266,7 +266,7 @@ export default function Recommendations() {
       >
         <Button
           size="lg"
-          className="h-14 rounded-2xl"
+          className="h-16 rounded-2xl"
           disabled={exercises.length === 0}
           onPress={() => {
             startWorkout();

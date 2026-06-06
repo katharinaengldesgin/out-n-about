@@ -361,7 +361,7 @@ export default function ContextFlow() {
         className="absolute inset-x-0 bottom-0 border-t border-border bg-background/95 px-5 pt-3"
         style={{ paddingBottom: insets.bottom + 12 }}
       >
-        <Button size="lg" className="h-14 rounded-2xl" disabled={!canProceed} onPress={proceed}>
+        <Button size="lg" className="h-16 rounded-2xl" disabled={!canProceed} onPress={proceed}>
           <Text weight="semibold" className="text-primary-foreground">
             Read my moment
           </Text>

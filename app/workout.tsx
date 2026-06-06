@@ -231,7 +231,7 @@ export default function Workout() {
         className="border-t border-border bg-background/95 px-5 pt-3"
         style={{ paddingBottom: insets.bottom + 12 }}
       >
-        <Button size="lg" className="h-14 rounded-2xl" onPress={handleAdvance}>
+        <Button size="lg" className="h-16 rounded-2xl" onPress={handleAdvance}>
           <View className="flex-row items-center gap-2">
             <Check size={18} color="white" />
             <Text weight="semibold" className="text-primary-foreground">

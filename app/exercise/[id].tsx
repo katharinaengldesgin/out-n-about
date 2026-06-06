@@ -212,7 +212,7 @@ export default function ExerciseDetail() {
         className="absolute inset-x-0 bottom-0 border-t border-border bg-background/95 px-5 pt-3"
         style={{ paddingBottom: insets.bottom + 12 }}
       >
-        <Button size="lg" className="h-13 rounded-2xl" onPress={() => router.back()}>
+        <Button size="lg" className="h-16 rounded-2xl" onPress={() => router.back()}>
           <Text weight="semibold" className="text-primary-foreground">
             Got it — back to my moves
           </Text>

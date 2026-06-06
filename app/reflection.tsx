@@ -132,7 +132,7 @@ export default function Reflection() {
       >
         <Button
           size="lg"
-          className="h-14 rounded-2xl"
+          className="h-16 rounded-2xl"
           onPress={() => {
             reset();
             router.dismissAll?.();
