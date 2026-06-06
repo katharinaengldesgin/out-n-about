@@ -63,7 +63,7 @@ export default function Recommendations() {
 
   return (
     <View className="flex-1 bg-background">
-      <ScreenHeader eyebrow="Your moment, read" />
+      <ScreenHeader eyebrow="Your moment, read" showBack onBack={() => router.replace('/context')} />
       <ScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + 130 }}
         showsVerticalScrollIndicator={false}

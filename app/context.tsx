@@ -213,7 +213,7 @@ export default function ContextFlow() {
 
   return (
     <View className="flex-1 bg-background">
-      <ScreenHeader eyebrow="Set your moment" />
+      <ScreenHeader eyebrow="Set your moment" showBack />
       <ScrollView
         contentContainerStyle={{ paddingBottom: insets.bottom + 130 }}
         showsVerticalScrollIndicator={false}
