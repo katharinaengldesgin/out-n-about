@@ -12,6 +12,7 @@
 import type { Exercise, InterpretedSignal, Scenario } from '@/lib/store';
 import { matchScenario } from '@/lib/store';
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
 // The key can arrive two ways: as an EXPO_PUBLIC_* env var inlined at bundle
 // time (when a .env file exists), or via app.config.ts -> extra (read from the
@@ -38,21 +39,26 @@ export async function transcribeAudio(uri: string): Promise<string> {
 
   const form = new FormData();
 
-  // Fetch the recorded file into a blob and append it. This works on web and
-  // on native (where fetch() on a file:// URI yields a blob).
-  const fileResp = await fetch(uri);
-  const blob = await fileResp.blob();
-  const ext = guessExtension(uri, blob.type);
-  // FormData on RN accepts a { uri, name, type } shape; on web we append the blob.
-  if (typeof File !== 'undefined') {
+  if (Platform.OS === 'web') {
+    // On web the recorder hands back a blob: URL — fetch it into a real Blob
+    // and wrap it in a File so the multipart upload carries a filename.
+    const fileResp = await fetch(uri);
+    const blob = await fileResp.blob();
+    const ext = guessExtension(uri, blob.type);
     form.append('file', new File([blob], `clip.${ext}`, { type: blob.type || `audio/${ext}` }));
   } else {
-    // React Native FormData
+    // On native (incl. Expo Go) do NOT round-trip through fetch().blob() — that
+    // path frequently yields an empty/broken blob and Whisper rejects it with a
+    // 400. React Native's FormData accepts the file:// URI directly via the
+    // { uri, name, type } shape, which streams the real file off disk.
+    const ext = guessExtension(uri, '');
+    const type =
+      ext === 'm4a' ? 'audio/m4a' : ext === 'wav' ? 'audio/wav' : ext === 'mp3' ? 'audio/mpeg' : `audio/${ext}`;
     form.append('file', {
       // @ts-expect-error RN FormData file shape
       uri,
       name: `clip.${ext}`,
-      type: blob.type || `audio/${ext}`,
+      type,
     });
   }
   form.append('model', TRANSCRIBE_MODEL);
