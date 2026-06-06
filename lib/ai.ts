@@ -11,8 +11,15 @@
 
 import type { Exercise, InterpretedSignal, Scenario } from '@/lib/store';
 import { matchScenario } from '@/lib/store';
+import Constants from 'expo-constants';
 
-const OPENAI_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? '';
+// The key can arrive two ways: as an EXPO_PUBLIC_* env var inlined at bundle
+// time (when a .env file exists), or via app.config.ts -> extra (read from the
+// sandbox shell env at config-eval time). Try both so it works either way.
+const OPENAI_KEY =
+  process.env.EXPO_PUBLIC_OPENAI_API_KEY ||
+  (Constants.expoConfig?.extra?.openaiApiKey as string | undefined) ||
+  '';
 const CHAT_MODEL = 'gpt-4o-mini';
 const TRANSCRIBE_MODEL = 'whisper-1';
 

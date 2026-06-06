@@ -33,6 +33,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     extra: {
       appStoreAppId: process.env.BILT_APP_STORE_APP_ID,
+      // Surface the OpenAI key through runtime config so it's available even
+      // when no .env file is present (the sandbox provides it as a shell env var).
+      openaiApiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? '',
     },
     plugins: [
       'expo-router',
