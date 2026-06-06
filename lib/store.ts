@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import { resolveExerciseImageId, type ExerciseImageId } from '@/lib/exerciseImages';
+
 // ---------------------------------------------------------------------------
 // OUT n ABOUT — mock "AI" engine + session store.
 // No backend. The AI is simulated through prewritten scenario interpretations
@@ -41,6 +43,8 @@ export interface Exercise {
   alternatives: { name: string; why: string }[];
   /** Equipment / surface this uses from the environment */
   uses: string;
+  /** Reference illustration id, resolved from id/keywords. */
+  imageId: ExerciseImageId;
 }
 
 export interface Scenario {
@@ -57,7 +61,10 @@ export interface Scenario {
 
 // --- Prewritten scenarios ---------------------------------------------------
 
-const SCENARIOS: Scenario[] = [
+type RawExercise = Omit<Exercise, 'imageId'>;
+type RawScenario = Omit<Scenario, 'exercises'> & { exercises: RawExercise[] };
+
+const RAW_SCENARIOS: RawScenario[] = [
   {
     id: 'park-bench',
     spokenExample:
@@ -385,6 +392,15 @@ const SCENARIOS: Scenario[] = [
     ],
   },
 ];
+
+// Inject the resolved reference image onto every prewritten exercise.
+const SCENARIOS: Scenario[] = RAW_SCENARIOS.map((s) => ({
+  ...s,
+  exercises: s.exercises.map((e) => ({
+    ...e,
+    imageId: resolveExerciseImageId({ id: e.id, name: e.name, uses: e.uses }),
+  })),
+}));
 
 // --- Keyword matcher for free-typed input ----------------------------------
 

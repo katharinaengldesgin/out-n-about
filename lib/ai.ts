@@ -10,6 +10,7 @@
 // ---------------------------------------------------------------------------
 
 import type { Exercise, InterpretedSignal, Scenario } from '@/lib/store';
+import { resolveExerciseImageId } from '@/lib/exerciseImages';
 import { matchScenario } from '@/lib/store';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
@@ -285,6 +286,7 @@ function normalize(raw: RawAIScenario, description: string): Scenario {
     formTips: e.formTips ?? [],
     confidenceCue: e.confidenceCue,
     alternatives: e.alternatives ?? [],
+    imageId: resolveExerciseImageId({ name: e.name, uses: e.uses }),
   }));
 
   return {

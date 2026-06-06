@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Image, Pressable, ScrollView, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useSession, type InterpretedSignal } from '@/lib/store';
+import { getExerciseImageSource } from '@/lib/exerciseImages';
 import { cn } from '@/lib/utils';
 
 const KIND_META: Record<InterpretedSignal['kind'], { icon: typeof Shirt; label: string }> = {
@@ -183,20 +184,28 @@ export default function Recommendations() {
                 className="rounded-2xl border border-border bg-card p-4"
               >
                 <View className="flex-row items-start justify-between">
-                  <View className="flex-1 pr-2">
-                    <View className="flex-row items-center gap-2">
-                      <Text size="base" weight="bold" className="text-card-foreground">
-                        {ex.name}
-                      </Text>
-                      <View className={cn('rounded-full px-2 py-0.5', DIFFICULTY_CLS[ex.difficulty])}>
-                        <Text size="xs" weight="semibold" className={DIFFICULTY_CLS[ex.difficulty].split(' ')[1]}>
-                          {ex.difficulty}
+                  <View className="flex-1 flex-row gap-3 pr-2">
+                    <Image
+                      source={getExerciseImageSource(ex.imageId)}
+                      style={{ width: 56, height: 56, borderRadius: 12 }}
+                      resizeMode="cover"
+                      accessibilityLabel={`Illustration of ${ex.name}`}
+                    />
+                    <View className="flex-1">
+                      <View className="flex-row items-center gap-2">
+                        <Text size="base" weight="bold" className="flex-shrink text-card-foreground">
+                          {ex.name}
                         </Text>
+                        <View className={cn('rounded-full px-2 py-0.5', DIFFICULTY_CLS[ex.difficulty])}>
+                          <Text size="xs" weight="semibold" className={DIFFICULTY_CLS[ex.difficulty].split(' ')[1]}>
+                            {ex.difficulty}
+                          </Text>
+                        </View>
                       </View>
+                      <Text size="xs" weight="medium" className="mt-0.5 text-muted-foreground">
+                        {ex.focus}
+                      </Text>
                     </View>
-                    <Text size="xs" weight="medium" className="mt-0.5 text-muted-foreground">
-                      {ex.focus}
-                    </Text>
                   </View>
                   <ChevronRight size={18} className="text-muted-foreground" />
                 </View>

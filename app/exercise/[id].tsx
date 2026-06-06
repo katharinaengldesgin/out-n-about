@@ -1,4 +1,4 @@
-import { ScrollView, View } from 'react-native';
+import { Image, ScrollView, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -8,6 +8,7 @@ import { BookOpen, Heart, Info, ListChecks, Repeat, Sparkles, X } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useSession } from '@/lib/store';
+import { getExerciseImageSource } from '@/lib/exerciseImages';
 import { cn } from '@/lib/utils';
 
 const DIFFICULTY_CLS: Record<string, string> = {
@@ -92,6 +93,21 @@ export default function ExerciseDetail() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Reference illustration */}
+        <Animated.View entering={FadeInDown.duration(400)} className="mx-5 mt-5">
+          <View className="overflow-hidden rounded-2xl border border-border bg-secondary/40">
+            <Image
+              source={getExerciseImageSource(exercise.imageId)}
+              style={{ width: '100%', aspectRatio: 4 / 3 }}
+              resizeMode="cover"
+              accessibilityLabel={`Illustration of ${exercise.name}`}
+            />
+          </View>
+          <Text size="xs" variant="muted" className="mt-1.5 text-center">
+            Reference form — how the move should look
+          </Text>
+        </Animated.View>
+
         {/* Why this — the Mirror */}
         <Animated.View entering={FadeInDown.duration(400)} className="mx-5 mt-5">
           <View className="flex-row gap-3 rounded-2xl bg-secondary/60 p-4">

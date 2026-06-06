@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
@@ -17,6 +17,7 @@ import { Platform } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useSession } from '@/lib/store';
+import { getExerciseImageSource } from '@/lib/exerciseImages';
 
 const ENCOURAGEMENTS = [
   'You showed up. That\u2019s the whole battle.',
@@ -146,6 +147,16 @@ export default function Workout() {
             <Text size="sm" className="mt-1 text-white/70">
               {current.focus}
             </Text>
+
+            <View className="mt-4 overflow-hidden rounded-2xl bg-white/10">
+              <Image
+                source={getExerciseImageSource(current.imageId)}
+                style={{ width: '100%', aspectRatio: 16 / 10 }}
+                resizeMode="cover"
+                accessibilityLabel={`Illustration of ${current.name}`}
+              />
+            </View>
+
             <View className="mt-4 flex-row gap-2">
               <View className="rounded-full bg-white/15 px-3 py-1.5">
                 <Text size="xs" weight="semibold" className="text-white">
