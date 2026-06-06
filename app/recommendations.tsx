@@ -185,12 +185,14 @@ export default function Recommendations() {
               >
                 <View className="flex-row items-start justify-between">
                   <View className="flex-1 flex-row gap-3 pr-2">
-                    <Image
-                      source={getExerciseImageSource(ex.imageId)}
-                      style={{ width: 56, height: 56, borderRadius: 12 }}
-                      resizeMode="cover"
-                      accessibilityLabel={`Illustration of ${ex.name}`}
-                    />
+                    <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-secondary/50">
+                      <Image
+                        source={getExerciseImageSource(ex.imageId)}
+                        style={{ width: '100%', height: '100%' }}
+                        resizeMode="contain"
+                        accessibilityLabel={`Illustration of ${ex.name}`}
+                      />
+                    </View>
                     <View className="flex-1">
                       <View className="flex-row items-center gap-2">
                         <Text size="base" weight="bold" className="flex-shrink text-card-foreground">

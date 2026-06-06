@@ -95,11 +95,11 @@ export default function ExerciseDetail() {
       >
         {/* Reference illustration */}
         <Animated.View entering={FadeInDown.duration(400)} className="mx-5 mt-5">
-          <View className="overflow-hidden rounded-2xl border border-border bg-secondary/40">
+          <View className="items-center justify-center overflow-hidden rounded-2xl border border-border bg-secondary/40">
             <Image
               source={getExerciseImageSource(exercise.imageId)}
               style={{ width: '100%', aspectRatio: 4 / 3 }}
-              resizeMode="cover"
+              resizeMode="contain"
               accessibilityLabel={`Illustration of ${exercise.name}`}
             />
           </View>

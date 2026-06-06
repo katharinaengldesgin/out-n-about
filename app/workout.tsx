@@ -148,11 +148,11 @@ export default function Workout() {
               {current.focus}
             </Text>
 
-            <View className="mt-4 overflow-hidden rounded-2xl bg-white/10">
+            <View className="mt-4 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
               <Image
                 source={getExerciseImageSource(current.imageId)}
                 style={{ width: '100%', aspectRatio: 16 / 10 }}
-                resizeMode="cover"
+                resizeMode="contain"
                 accessibilityLabel={`Illustration of ${current.name}`}
               />
             </View>
