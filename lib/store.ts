@@ -388,7 +388,7 @@ const SCENARIOS: Scenario[] = [
 
 // --- Keyword matcher for free-typed input ----------------------------------
 
-function matchScenario(text: string): Scenario {
+export function matchScenario(text: string): Scenario {
   const t = text.toLowerCase();
   const wet = /(wet|rain|damp|slippery|puddle)/.test(t);
   const skirt = /(skirt|dress|flats|heels)/.test(t);
@@ -412,6 +412,10 @@ interface SessionState {
   inputMode: InputMode;
   rawDescription: string;
   scenario: Scenario | null;
+  /** AI generation in flight (transcription already done, building the session) */
+  generating: boolean;
+  /** True when the live AI failed and we served a fallback scenario */
+  usedFallback: boolean;
   // workout progress
   activeIndex: number;
   completedExercises: string[];
@@ -422,6 +426,8 @@ interface SessionState {
   setRawDescription: (s: string) => void;
   /** Run the mock interpretation against a chosen scenario or free text */
   interpret: (input: { scenarioId?: string; text?: string }) => void;
+  /** Run the live LLM interpretation against the captured description */
+  interpretLive: (description: string) => Promise<void>;
   setScenarioById: (id: string) => void;
   reset: () => void;
 
@@ -436,6 +442,8 @@ export const useSession = create<SessionState>((set, get) => ({
   inputMode: 'voice',
   rawDescription: '',
   scenario: null,
+  generating: false,
+  usedFallback: false,
   activeIndex: 0,
   completedExercises: [],
   history: [],
@@ -454,6 +462,35 @@ export const useSession = create<SessionState>((set, get) => ({
     set({
       scenario,
       rawDescription: text ?? scenario.spokenExample,
+      activeIndex: 0,
+      completedExercises: [],
+    });
+  },
+
+  interpretLive: async (description) => {
+    const text = description.trim();
+    set({ generating: true, usedFallback: false, rawDescription: text });
+    // Dynamic import avoids a circular module dependency (ai.ts imports the store).
+    const { interpretWithAI, AI_ENABLED } = await import('@/lib/ai');
+    let scenario: Scenario;
+    let usedFallback = false;
+    if (!AI_ENABLED) {
+      scenario = matchScenario(text);
+      usedFallback = true;
+    } else {
+      const before = Date.now();
+      scenario = await interpretWithAI(text);
+      // interpretWithAI returns a keyword-matched scenario on failure; detect
+      // that by the id prefix so we can tell the user honestly.
+      usedFallback = !scenario.id.startsWith('ai-');
+      // Keep the analysis state visible for at least a moment so it doesn't flash.
+      const elapsed = Date.now() - before;
+      if (elapsed < 900) await new Promise((r) => setTimeout(r, 900 - elapsed));
+    }
+    set({
+      scenario,
+      generating: false,
+      usedFallback,
       activeIndex: 0,
       completedExercises: [],
     });

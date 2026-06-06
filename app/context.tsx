@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
   Easing,
@@ -12,22 +12,31 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Keyboard, Lock, Mic, Pencil } from 'lucide-react-native';
+import { AlertCircle, Keyboard, Loader, Lock, Mic, Pencil, Square } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
+import {
+  AudioModule,
+  RecordingPresets,
+  setAudioModeAsync,
+  useAudioRecorder,
+  useAudioRecorderState,
+} from 'expo-audio';
 
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SAMPLE_SCENARIOS, VOICE_PROMPTS, useSession } from '@/lib/store';
+import { AI_ENABLED, transcribeAudio } from '@/lib/ai';
 import { cn } from '@/lib/utils';
 
-function MicOrb({ listening }: { listening: boolean }) {
+type MicState = 'idle' | 'recording' | 'transcribing' | 'error';
+
+function MicOrb({ active }: { active: boolean }) {
   const scale = useSharedValue(1);
   const ring = useSharedValue(0);
 
   useEffect(() => {
-    if (listening) {
+    if (active) {
       scale.value = withRepeat(withTiming(1.08, { duration: 700, easing: Easing.inOut(Easing.ease) }), -1, true);
       ring.value = withRepeat(withTiming(1, { duration: 1600, easing: Easing.out(Easing.ease) }), -1, false);
     } else {
@@ -40,7 +49,7 @@ function MicOrb({ listening }: { listening: boolean }) {
       cancelAnimation(scale);
       cancelAnimation(ring);
     };
-  }, [listening, scale, ring]);
+  }, [active, scale, ring]);
 
   const orbStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const ringStyle = useAnimatedStyle(() => ({
@@ -50,18 +59,19 @@ function MicOrb({ listening }: { listening: boolean }) {
 
   return (
     <View className="h-44 items-center justify-center">
-      <Animated.View
-        style={ringStyle}
-        className="absolute h-36 w-36 rounded-full border-2 border-primary"
-      />
+      <Animated.View style={ringStyle} className="absolute h-36 w-36 rounded-full border-2 border-primary" />
       <Animated.View style={orbStyle}>
         <View
           className={cn(
             'h-28 w-28 items-center justify-center rounded-full',
-            listening ? 'bg-primary' : 'bg-secondary',
+            active ? 'bg-primary' : 'bg-secondary',
           )}
         >
-          <Mic size={36} color={listening ? 'white' : 'hsl(162, 32%, 26%)'} />
+          {active ? (
+            <Square size={30} color="white" fill="white" />
+          ) : (
+            <Mic size={36} color="hsl(162, 32%, 26%)" />
+          )}
         </View>
       </Animated.View>
     </View>
@@ -71,35 +81,87 @@ function MicOrb({ listening }: { listening: boolean }) {
 export default function ContextFlow() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { inputMode, setInputMode, interpret } = useSession();
+  const { inputMode, setInputMode, interpretLive } = useSession();
 
-  const [listening, setListening] = useState(false);
+  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(recorder);
+
+  const [micState, setMicState] = useState<MicState>('idle');
   const [captured, setCaptured] = useState<string | null>(null);
-  const [pickedId, setPickedId] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [typed, setTyped] = useState('');
 
   const isVoice = inputMode === 'voice';
+  const isRecording = recorderState.isRecording || micState === 'recording';
 
-  function simulateVoice(scenarioId: string, transcript: string) {
-    if (Platform.OS !== 'web') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setListening(true);
+  useEffect(() => {
+    void setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true }).catch(() => {});
+  }, []);
+
+  async function startRecording() {
+    setErrorMsg(null);
     setCaptured(null);
-    setPickedId(scenarioId);
-    // simulate ephemeral, on-the-fly transcription
-    setTimeout(() => {
-      setListening(false);
-      setCaptured(transcript);
-      if (Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }, 2200);
+    try {
+      const perm = await AudioModule.requestRecordingPermissionsAsync();
+      if (!perm.granted) {
+        setMicState('error');
+        setErrorMsg('I need microphone access to hear you. You can also switch to typing below.');
+        return;
+      }
+      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+      setMicState('recording');
+      if (Platform.OS !== 'web') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      setMicState('error');
+      setErrorMsg('Couldn’t start recording. Try again, or switch to typing.');
+    }
   }
 
-  function proceed() {
-    if (isVoice && pickedId) {
-      interpret({ scenarioId: pickedId, text: captured ?? undefined });
-    } else {
-      interpret({ text: typed.trim() });
+  async function stopRecording() {
+    try {
+      await recorder.stop();
+      if (Platform.OS !== 'web') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      const uri = recorder.uri;
+      if (!uri) throw new Error('NO_URI');
+
+      if (!AI_ENABLED) {
+        // No key — be honest and let them type instead.
+        setMicState('error');
+        setErrorMsg('Voice transcription isn’t configured. Type your description below and I’ll still read your moment.');
+        return;
+      }
+
+      setMicState('transcribing');
+      const text = await transcribeAudio(uri);
+      setCaptured(text);
+      setMicState('idle');
+      if (Platform.OS !== 'web') void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      setMicState('error');
+      setErrorMsg('I couldn’t quite catch that. Give it another go, or type instead.');
     }
+  }
+
+  function onOrbPress() {
+    if (isRecording) void stopRecording();
+    else void startRecording();
+  }
+
+  async function proceed() {
+    const description = isVoice ? (captured ?? '') : typed.trim();
+    if (!description) return;
     router.push('/interpreting');
+    // Kick off live AI generation; the interpreting screen waits on `generating`.
+    void interpretLive(description);
+  }
+
+  function tryExample(spoken: string) {
+    // Lets reviewers experience the flow without speaking; still runs the real LLM.
+    setCaptured(spoken);
+    setMicState('idle');
+    setErrorMsg(null);
   }
 
   const canProceed = isVoice ? !!captured : typed.trim().length > 8;
@@ -150,18 +212,27 @@ export default function ContextFlow() {
           <Lock size={16} className="text-primary" />
           <Text size="xs" variant="muted" className="flex-1 leading-relaxed">
             <Text size="xs" weight="semibold" className="text-foreground">Private by design. </Text>
-            Your voice is processed in the moment and never recorded, stored, or sent anywhere. No camera is used.
+            Your voice is transcribed in the moment to read your surroundings, then discarded — never recorded, stored, or used to train anything. No camera is used.
           </Text>
         </Animated.View>
 
         {isVoice ? (
           <View className="mt-2 px-5">
-            <MicOrb listening={listening} />
+            <Pressable onPress={onOrbPress} accessibilityRole="button" accessibilityLabel={isRecording ? 'Stop recording' : 'Start recording'}>
+              <MicOrb active={isRecording} />
+            </Pressable>
 
-            {listening ? (
+            {micState === 'recording' ? (
               <Animated.View entering={FadeIn} className="items-center">
                 <Text size="sm" weight="medium" className="text-primary">
-                  Listening… take your time
+                  Listening… tap when you’re done
+                </Text>
+              </Animated.View>
+            ) : micState === 'transcribing' ? (
+              <Animated.View entering={FadeIn} className="flex-row items-center justify-center gap-2">
+                <Loader size={16} className="text-primary" />
+                <Text size="sm" weight="medium" className="text-primary">
+                  Catching your words…
                 </Text>
               </Animated.View>
             ) : captured ? (
@@ -172,14 +243,17 @@ export default function ContextFlow() {
                 <Text size="base" className="mt-2 italic leading-relaxed text-card-foreground">
                   “{captured}”
                 </Text>
-                <Pressable onPress={() => { setCaptured(null); setPickedId(null); }} className="mt-3 self-start">
+                <Pressable
+                  onPress={() => { setCaptured(null); setErrorMsg(null); }}
+                  className="mt-3 self-start"
+                >
                   <Text size="xs" weight="semibold" className="text-primary">Not quite — say it again</Text>
                 </Pressable>
               </Animated.View>
             ) : (
               <>
                 <Text size="sm" variant="muted" className="mb-3 text-center">
-                  Tap a prompt to hear how it works — or just start talking.
+                  Tap the mic and just start talking. Tap again when you’re done.
                 </Text>
                 {VOICE_PROMPTS.map((p, i) => (
                   <View key={p} className="mb-2 flex-row items-start gap-2 rounded-xl bg-muted px-4 py-3">
@@ -188,12 +262,12 @@ export default function ContextFlow() {
                   </View>
                 ))}
                 <Text size="xs" weight="semibold" className="mb-2 mt-4 uppercase tracking-widest text-muted-foreground">
-                  Try one of these
+                  Or try one of these
                 </Text>
                 {SAMPLE_SCENARIOS.map((s) => (
                   <Pressable
                     key={s.id}
-                    onPress={() => simulateVoice(s.id, s.spokenExample)}
+                    onPress={() => tryExample(s.spokenExample)}
                     className="mb-2 flex-row items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
                   >
                     <Mic size={16} className="text-primary" />
@@ -202,6 +276,13 @@ export default function ContextFlow() {
                 ))}
               </>
             )}
+
+            {errorMsg ? (
+              <Animated.View entering={FadeIn} className="mt-3 flex-row gap-2.5 rounded-xl border border-destructive/30 bg-destructive/10 p-3.5">
+                <AlertCircle size={16} className="text-destructive" />
+                <Text size="xs" className="flex-1 leading-relaxed text-foreground/85">{errorMsg}</Text>
+              </Animated.View>
+            ) : null}
           </View>
         ) : (
           <View className="mt-3 px-5">
@@ -235,12 +316,7 @@ export default function ContextFlow() {
         className="absolute inset-x-0 bottom-0 border-t border-border bg-background/95 px-5 pt-3"
         style={{ paddingBottom: insets.bottom + 12 }}
       >
-        <Button
-          size="lg"
-          className="h-14 rounded-2xl"
-          disabled={!canProceed}
-          onPress={proceed}
-        >
+        <Button size="lg" className="h-14 rounded-2xl" disabled={!canProceed} onPress={proceed}>
           <Text weight="semibold" className="text-primary-foreground">
             Read my moment
           </Text>

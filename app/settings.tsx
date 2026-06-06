@@ -38,7 +38,7 @@ const REQUIREMENTS: Requirement[] = [
     area: 'Input modality',
     question: 'Voice-first context gathering, with a typed fallback.',
     manifested:
-      'The context screen opens to a conversational mic orb with low-pressure prompts. A clearly-labelled toggle switches to a typed description using the same prompts. No camera or image input appears anywhere in the app.',
+      'The context screen opens to a conversational mic orb. Tapping it records you through your device microphone; your speech is transcribed by Whisper and read by the language model. A clearly-labelled toggle switches to a typed description using the same prompts. No camera or image input appears anywhere in the app.',
   },
   {
     icon: Lock,
@@ -160,8 +160,11 @@ export default function Settings() {
 
         <View className="mx-5 mt-2 rounded-2xl bg-muted/60 p-4">
           <Text size="xs" variant="muted" className="leading-relaxed">
-            Prototype note: AI behaviour is simulated with prewritten analysis and sample scenarios. There
-            is no backend, no recording, and no image input — by design.
+            How it works: your spoken description is transcribed with OpenAI Whisper and interpreted by
+            a language model that builds your reflection, signals, and moves in real time. Audio is sent
+            once for transcription and never stored. If the model can’t be reached, the app falls back to
+            a close prewritten match so you’re never stuck. No backend database, no recording, no image
+            input — by design.
           </Text>
         </View>
       </ScrollView>

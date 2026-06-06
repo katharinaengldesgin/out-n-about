@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Check, Loader } from 'lucide-react-native';
 
+import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { Wordmark } from '@/components/Wordmark';
 import { ANALYSIS_STEPS, useSession } from '@/lib/store';
@@ -32,19 +33,41 @@ function Spinner() {
 
 export default function Interpreting() {
   const router = useRouter();
+  const generating = useSession((s) => s.generating);
   const scenario = useSession((s) => s.scenario);
+  const rawDescription = useSession((s) => s.rawDescription);
   const [step, setStep] = useState(0);
+  const [stalled, setStalled] = useState(false);
 
+  // Walk the visible analysis steps. They loop on the last one until the real
+  // AI result lands, so the loading state always feels honest and in-progress.
   useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    ANALYSIS_STEPS.forEach((_, i) => {
-      timers.push(setTimeout(() => setStep(i + 1), 650 * (i + 1)));
-    });
-    timers.push(
-      setTimeout(() => router.replace('/recommendations'), 650 * ANALYSIS_STEPS.length + 700),
-    );
-    return () => timers.forEach(clearTimeout);
-  }, [router]);
+    const id = setInterval(() => {
+      setStep((s) => (s < ANALYSIS_STEPS.length ? s + 1 : s));
+    }, 600);
+    return () => clearInterval(id);
+  }, []);
+
+  // When generation finishes and we have a scenario, move on. Hold briefly so
+  // the final checkmark is visible rather than flashing past.
+  useEffect(() => {
+    if (!generating && scenario) {
+      const t = setTimeout(() => router.replace('/recommendations'), 450);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  }, [generating, scenario, router]);
+
+  // Honest timeout: if something is wrong (e.g. nothing was ever generated),
+  // give the user a calm way out instead of an endless spinner.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (generating || !scenario) setStalled(true);
+    }, 18000);
+    return () => clearTimeout(t);
+  }, [generating, scenario]);
+
+  const lastStepActive = step >= ANALYSIS_STEPS.length;
 
   return (
     <View className="flex-1 items-center justify-center bg-background px-7">
@@ -55,25 +78,27 @@ export default function Interpreting() {
         </Text>
       </Animated.View>
 
-      {/* Reflection preview */}
-      {scenario ? (
+      {/* What the user said, reflected back immediately */}
+      {rawDescription ? (
         <Animated.View
-          entering={FadeInDown.delay(200).duration(450)}
+          entering={FadeInDown.delay(150).duration(450)}
           className="mb-8 w-full rounded-2xl border border-border bg-card p-4"
         >
           <Text size="xs" weight="semibold" className="uppercase tracking-widest text-accent">
             Reflecting back
           </Text>
-          <Text size="base" className="mt-2 leading-relaxed text-card-foreground">
-            {scenario.reflection}
+          <Text size="base" className="mt-2 italic leading-relaxed text-card-foreground">
+            “{rawDescription}”
           </Text>
         </Animated.View>
       ) : null}
 
       <View className="w-full">
         {ANALYSIS_STEPS.map((label, i) => {
-          const done = step > i;
-          const active = step === i;
+          const isLast = i === ANALYSIS_STEPS.length - 1;
+          // Last step stays "active" (working) until the AI result arrives.
+          const done = isLast ? !generating && !!scenario : step > i + 1;
+          const active = isLast ? generating || !scenario : step === i + 1;
           return (
             <View key={label} className="mb-3 flex-row items-center gap-3">
               <View
@@ -87,7 +112,7 @@ export default function Interpreting() {
               <Text
                 size="sm"
                 weight={done || active ? 'medium' : 'regular'}
-                className={cn(done ? 'text-foreground' : active ? 'text-foreground' : 'text-muted-foreground')}
+                className={cn(done || active ? 'text-foreground' : 'text-muted-foreground')}
               >
                 {label}
               </Text>
@@ -95,6 +120,23 @@ export default function Interpreting() {
           );
         })}
       </View>
+
+      {stalled ? (
+        <Animated.View entering={FadeIn} className="mt-8 w-full items-center">
+          <Text size="sm" variant="muted" className="mb-3 text-center leading-relaxed">
+            This is taking longer than usual. Want to try describing your moment again?
+          </Text>
+          <Button variant="outline" onPress={() => router.replace('/context')}>
+            <Text weight="semibold" className="text-foreground">
+              Describe it again
+            </Text>
+          </Button>
+        </Animated.View>
+      ) : (
+        <Text size="xs" variant="muted" className="mt-8 text-center">
+          {lastStepActive ? 'Almost there — choosing the right moves for you…' : ' '}
+        </Text>
+      )}
     </View>
   );
 }

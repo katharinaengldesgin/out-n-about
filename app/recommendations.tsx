@@ -41,7 +41,7 @@ const DIFFICULTY_CLS: Record<string, string> = {
 export default function Recommendations() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { scenario, startWorkout } = useSession();
+  const { scenario, startWorkout, usedFallback } = useSession();
   const [removed, setRemoved] = useState<string[]>([]);
   const [showFollowUp, setShowFollowUp] = useState(true);
 
@@ -69,6 +69,15 @@ export default function Recommendations() {
       >
         {/* Reflection — the Mirror */}
         <Animated.View entering={FadeIn.duration(400)} className="px-5 pt-1">
+          {usedFallback ? (
+            <View className="mb-3 flex-row gap-2 rounded-xl border border-accent/30 bg-accent/10 p-3">
+              <Info size={14} className="mt-0.5 text-accent" />
+              <Text size="xs" className="flex-1 leading-relaxed text-foreground/85">
+                I couldn’t reach the live coach just now, so this is a close match from what you
+                described. Still tailored to your moment — just not freshly generated.
+              </Text>
+            </View>
+          ) : null}
           <View className="rounded-2xl bg-secondary/60 p-4">
             <View className="mb-2 flex-row items-center gap-2">
               <Sparkles size={15} className="text-accent" />

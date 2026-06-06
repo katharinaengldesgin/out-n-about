@@ -34,7 +34,18 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     extra: {
       appStoreAppId: process.env.BILT_APP_STORE_APP_ID,
     },
-    plugins: ['expo-router', 'expo-font', ...nativePlugins],
+    plugins: [
+      'expo-router',
+      'expo-font',
+      [
+        'expo-audio',
+        {
+          microphonePermission:
+            'OUT n ABOUT uses your microphone only while you describe your surroundings. Audio is transcribed in the moment and never stored.',
+        },
+      ],
+      ...nativePlugins,
+    ],
     experiments: {
       typedRoutes: true,
     }
