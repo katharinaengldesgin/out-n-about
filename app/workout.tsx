@@ -141,22 +141,27 @@ export default function Workout() {
             <Text size="xs" weight="semibold" className="uppercase tracking-widest text-white/60">
               Now
             </Text>
-            <Text size="2xl" weight="bold" className="mt-1 text-white">
-              {current.name}
-            </Text>
-            <Text size="sm" className="mt-1 text-white/70">
-              {current.focus}
-            </Text>
 
-            <View className="mt-4 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
-              <ExerciseImage
-                imageId={current.imageId}
-                style={{ width: '100%', aspectRatio: 16 / 10 }}
-                glyphColor="#ffffff"
-                glyphSize={120}
-                glyphFrameClassName="w-full items-center justify-center py-7"
-                accessibilityLabel={`Illustration of ${current.name}`}
-              />
+            {/* Horizontal layout: thumbnail beside the title to avoid tall empty green space */}
+            <View className="mt-1 flex-row items-center gap-4">
+              <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-white/10">
+                <ExerciseImage
+                  imageId={current.imageId}
+                  style={{ width: '100%', height: '100%' }}
+                  glyphColor="#ffffff"
+                  glyphSize={64}
+                  glyphFrameClassName="h-full w-full items-center justify-center"
+                  accessibilityLabel={`Illustration of ${current.name}`}
+                />
+              </View>
+              <View className="flex-1">
+                <Text size="2xl" weight="bold" className="text-white">
+                  {current.name}
+                </Text>
+                <Text size="sm" className="mt-1 text-white/70">
+                  {current.focus}
+                </Text>
+              </View>
             </View>
 
             <View className="mt-4 flex-row gap-2">
